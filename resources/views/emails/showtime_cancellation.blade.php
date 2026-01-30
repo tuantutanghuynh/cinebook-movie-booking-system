@@ -329,11 +329,12 @@
             @if($refundAmount > 0)
             <!-- Refund Information -->
             <div class="refund-box">
-                <h3>💰 Automatic Refund Issued</h3>
+                <h3>💰 Full Refund Will Be Processed</h3>
                 <div class="refund-amount">{{ number_format($refundAmount, 0) }} VND</div>
                 <p class="refund-note">
-                    ✅ Your refund has been processed automatically.<br>
-                    The amount will be returned to your original payment method within 3-7 business days.
+                    ✅ Your full refund is being processed.<br>
+                    The amount will be returned to your original payment method within 5-7 business days.<br>
+                    You will receive a confirmation once the refund is complete.
                 </p>
             </div>
             @endif

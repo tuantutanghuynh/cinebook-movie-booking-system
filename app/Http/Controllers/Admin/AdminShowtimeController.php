@@ -289,13 +289,16 @@ class AdminShowtimeController extends Controller
 
             foreach ($bookings as $booking) {
                 // Calculate refund amount (full refund for paid bookings)
+                // NOTE: This is for notification only - no actual payment gateway integration yet
+                // In production: call Momo/VNPay refund API here
                 $refundAmount = ($booking->payment_status === 'paid') ? $booking->total_price : 0;
                 $refundTotal += $refundAmount;
 
                 // Update booking status to cancelled
+                // Keep payment_status as 'paid' for audit trail
+                // In production: update to 'refunded' only after successful API call
                 $booking->update([
                     'status' => 'cancelled',
-                    // Keep payment_status as 'paid' for audit - create separate refund record in production
                 ]);
 
                 // Cancel all QR codes for this booking
@@ -331,7 +334,8 @@ class AdminShowtimeController extends Controller
             $message = "Showtime cancelled successfully! ";
             $message .= "Cancelled {$cancelledCount} booking(s). ";
             if ($refundTotal > 0) {
-                $message .= "Total refunds to process: " . number_format($refundTotal, 0) . " VND. ";
+                $message .= "Total refunds to process MANUALLY: " . number_format($refundTotal, 0) . " VND. ";
+                $message .= "⚠️ Please process refunds manually via payment gateway. ";
             }
             $message .= "Notification emails sent to {$emailsSent} customer(s).";
 

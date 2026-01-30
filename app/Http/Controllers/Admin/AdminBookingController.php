@@ -122,6 +122,8 @@ class AdminBookingController extends Controller
         try {
             // Get cancellation reason and refund amount from request
             $reason = $request->input('reason', 'Cancelled by administrator');
+            // Calculate refund amount for notification only (no actual payment API integration)
+            // TODO: Integrate Momo/VNPay refund API in production
             $refundAmount = $booking->payment_status === 'paid' ? $booking->total_price : 0;
 
             // Update booking status
