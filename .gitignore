@@ -27,5 +27,6 @@ Thumbs.db
 
 # Exclude documentation files
 *.md
+!README.md
 *.pdf
 docs/
