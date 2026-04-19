@@ -26,21 +26,21 @@ class MovieController extends Controller
      * Helper function to attach genres to movies (using Eloquent relationships)
      */
     private function attachGenresToMovies($movies)
-    {   
+    {
         // Eager load genres for all movies
         $movieIds = collect($movies)->pluck('id')->toArray();
-        
+
         $moviesWithGenres = Movie::with('genres')
             ->whereIn('id', $movieIds)
             ->get()
             ->keyBy('id');
-        
+
         // Attach genres to each movie
         foreach ($movies as $movie) {
             $movieModel = $moviesWithGenres->get($movie->id);
             $movie->genres = $movieModel ? $movieModel->genres->pluck('name')->toArray() : [];
         }
-        
+
         return $movies;
     }
     /**
@@ -67,7 +67,7 @@ class MovieController extends Controller
     {
         // Auto-update movie statuses based on real-time
         $this->updateMovieStatuses();
-        
+
         // Get viral/trending "Now Showing" movies based on:
         // 1. Number of bookings (popularity)
         // 2. Number of reviews (engagement)
@@ -98,12 +98,12 @@ class MovieController extends Controller
             ->orderByDesc('movies.rating_avg')
             ->limit(6)
             ->get();
-        
+
         //upcoming movies - ordered by release date
         $upcomingMovies = DB::table('movies')
-        ->where('status', 'coming_soon')
-        ->orderBy('release_date', 'asc')
-        ->limit(6)->get(); // fetch only 6 upcoming movies for homepage
+            ->where('status', 'coming_soon')
+            ->orderBy('release_date', 'asc')
+            ->limit(6)->get(); // fetch only 6 upcoming movies for homepage
 
         // Attach genres using helper function
         $movies = $this->attachGenresToMovies($movies);
@@ -111,9 +111,16 @@ class MovieController extends Controller
         // Attach age ratings using helper function
         $movies = $this->attachAgeRatingsToMovies($movies);
         $upcomingMovies = $this->attachAgeRatingsToMovies($upcomingMovies);
-        
+
+        if (request()->expectsJson()) {
+            return response()->json([
+                'movies' => $movies,
+                'upcomingMovies' => $upcomingMovies,
+            ]);
+        }
         return view('homepage', compact('movies', 'upcomingMovies'));
     }
+
 
     /**
      * Auto-update movie statuses based on current date and time
@@ -121,22 +128,22 @@ class MovieController extends Controller
     private function updateMovieStatuses()
     {
         $now = Carbon::now();
-        
+
         // Update coming_soon to now_showing for movies released today or before
         // (but only if they haven't been manually ended)
         Movie::where('status', 'coming_soon')
             ->where('release_date', '<=', $now->toDateString())
             ->update(['status' => 'now_showing']);
     }
-    
+
     //1. movie function to fetch all movies from the database and return to index view
     public function index()
     {
         $movies = DB::table('movies')->get();
-        
+
         // Attach genres using helper function
         $movies = $this->attachGenresToMovies($movies);
-        
+
         return view('index', compact('movies'));
     }
     public function show(Request $request, $id)
@@ -145,7 +152,7 @@ class MovieController extends Controller
         $this->updateMovieStatuses();
 
         // Use Eloquent Model instead of DB::table to enable relationships
-        $movie = Movie::with('genres','reviews.user')->findOrFail($id);
+        $movie = Movie::with('genres', 'reviews.user')->findOrFail($id);
 
         // Get genres for this movie using relationships
         if ($movie) {
@@ -170,11 +177,11 @@ class MovieController extends Controller
                     ->where('bookings.user_id', $userId)
                     ->where('showtimes.movie_id', $id)
                     ->where('bookings.payment_status', 'paid')
-                    ->where(function($query) {
+                    ->where(function ($query) {
                         $query->where('showtimes.show_date', '<', now()->toDateString())
-                            ->orWhere(function($q) {
+                            ->orWhere(function ($q) {
                                 $q->where('showtimes.show_date', '=', now()->toDateString())
-                                  ->where('showtimes.show_time', '<', now()->toTimeString());
+                                    ->where('showtimes.show_time', '<', now()->toTimeString());
                             });
                     })
                     ->exists();
@@ -193,7 +200,7 @@ class MovieController extends Controller
     {
         // Auto-update movie statuses based on real-time
         $this->updateMovieStatuses();
-        
+
         $query = DB::table('movies')->where('status', 'coming_soon');
 
         // Filter: Genre
@@ -262,7 +269,7 @@ class MovieController extends Controller
 
         $movies = $query->get();
         $movies = $this->attachGenresToMovies($movies);
-        
+
         // Attach age ratings using helper function
         $movies = $this->attachAgeRatingsToMovies($movies);
 
@@ -277,7 +284,7 @@ class MovieController extends Controller
     {
         // Auto-update movie statuses based on real-time
         $this->updateMovieStatuses();
-        
+
         $query = DB::table('movies')->where('status', 'now_showing');
 
         // Filter: Genre
@@ -346,7 +353,7 @@ class MovieController extends Controller
 
         $movies = $query->get();
         $movies = $this->attachGenresToMovies($movies);
-        
+
         //Attach age ratings using helper function
         $movies = $this->attachAgeRatingsToMovies($movies);
 
@@ -382,5 +389,4 @@ class MovieController extends Controller
     {
         return view('sitemap');
     }
-    
 }

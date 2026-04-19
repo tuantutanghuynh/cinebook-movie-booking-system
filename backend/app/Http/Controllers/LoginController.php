@@ -141,4 +141,35 @@ class LoginController extends Controller
         
         return redirect($intendedUrl);
     }
+
+    public function apiLogin(Request $request){
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('email', trim($request->email))->first();
+
+        if(!$user || $request->password !== $user->password){
+            return response()->json(['message' => 'Invalid email or password'], 401);
+        }
+
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'token' => $token,
+            'user' => [
+                'id' => $user->id,
+                'name'=> $user->name,
+                'email'=> $user->email,
+                'role'=> $user->role,
+            ]
+        ]);
+        
+    }
+
+    public function apiLogout(Request $request){
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => "Loggout successfull!"]);
+    }
 }

@@ -6,3 +6,10 @@ frontend/node_modules/
 frontend/.env
 frontend/dist/
 frontend/.vite/
+
+# Ignore PDF and Markdown files
+*.pdf
+*.md
+# But not README files
+!README.md
+!**/README.md

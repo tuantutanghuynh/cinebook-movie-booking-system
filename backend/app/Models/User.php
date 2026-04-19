@@ -6,8 +6,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use App\Models\Booking;
 use App\Models\Review;
+
 
 /**
  * User Model
@@ -19,7 +21,7 @@ use App\Models\Review;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -58,7 +60,7 @@ class User extends Authenticatable
     }
 
     // ==================== RELATIONSHIPS ====================
-    
+
     /**
      * Get all bookings for this user
      */
@@ -76,17 +78,17 @@ class User extends Authenticatable
     }
 
     // ==================== ROLE CHECKERS ====================
-    
+
     public function isAdmin()
     {
         return $this->role === 'admin';
     }
-    
+
     public function isUser()
     {
         return $this->role === 'user';
     }
-    
+
     public function isGuest()
     {
         return $this->role === 'guest';
@@ -120,12 +122,12 @@ class User extends Authenticatable
     public function getUpcomingBookings()
     {
         return $this->bookings()
-            ->whereHas('showtime', function($query) {
+            ->whereHas('showtime', function ($query) {
                 $query->where('show_date', '>=', now()->toDateString())
-                      ->orWhere(function($q) {
-                          $q->where('show_date', '=', now()->toDateString())
+                    ->orWhere(function ($q) {
+                        $q->where('show_date', '=', now()->toDateString())
                             ->where('show_time', '>', now()->toTimeString());
-                      });
+                    });
             })
             ->with(['showtime.movie', 'showtime.room'])
             ->orderBy('created_at', 'desc')
@@ -138,12 +140,12 @@ class User extends Authenticatable
     public function getPastBookings()
     {
         return $this->bookings()
-            ->whereHas('showtime', function($query) {
+            ->whereHas('showtime', function ($query) {
                 $query->where('show_date', '<', now()->toDateString())
-                      ->orWhere(function($q) {
-                          $q->where('show_date', '=', now()->toDateString())
+                    ->orWhere(function ($q) {
+                        $q->where('show_date', '=', now()->toDateString())
                             ->where('show_time', '<=', now()->toTimeString());
-                      });
+                    });
             })
             ->with(['showtime.movie', 'showtime.room'])
             ->orderBy('created_at', 'desc')
